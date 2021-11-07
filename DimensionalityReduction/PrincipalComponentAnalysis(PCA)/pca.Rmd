@@ -197,7 +197,7 @@ points(grid_set, pch = '.', col = ifelse(y_grid == 2, 'deepskyblue', ifelse(y_gr
 points(set, pch = 21, bg = ifelse(set[, 3] == 2, 'blue3', ifelse(set[, 3] == 1, 'green4', 'red3')))
 ```
 
-## Visualize Tes Set Results
+## Visualize Test Set Results
 
 
 ```{r}
