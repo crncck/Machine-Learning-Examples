@@ -1,0 +1,224 @@
+---
+title: "Machine Learning"
+author: "Ayşe Ceren Çiçek"
+output: 
+  pdf_document: default
+  html_document: default
+  word_document: default
+subtitle: Principal Component Analysis
+font-family: Gill Sans
+---
+
+
+PCA is an unsupervised algorithm that is used for dimensionality reduction. 
+
+Its goal is to identify and detect the correlation between variables. It is attempting to learn about relationship between values by finding a list of principal axes and it projects high dimensional data into smaller dimensional subspace while keeping most of the information.
+
+
+PCA's key advantages are:
+
+- its low noise sensitivity 
+- the decreased requirements for capacity and memory
+- increased efficiency has given the processes taking place in smaller dimensions
+
+PCA is highly get affected by outliers.
+
+
+Dataset: https://archive.ics.uci.edu/ml/datasets/wine 
+
+The wine dataset contains the results of a chemical analysis of wines grown in a specific area of Italy. Three types of wine are represented in the 178 samples, with the results of 13 chemical analyses recorded for each sample. 
+
+The columns are:
+
+- Alcohol
+- Malic acid
+- Ash
+- Alcalinity of ash
+- Magnesium
+- Total phenols
+- Flavanoids
+- Nonflavanoid phenols
+- Proanthocyanins
+- Color intensity
+- Hue
+- OD280/OD315 of diluted wines
+- Proline
+- Custome Segment
+
+Using pca we will try to reduce the dimensionality of this dataset. It contains 13 dimensions(13 independent variables). We will end up with new two independent variables that are among those original 13 independent variables. Our dependent variable is Customer_Segment.  
+
+## Importing libraries
+
+```{r, warning=FALSE}
+#install.packages('caTools')
+#install.packages('caret')
+#install.packages('e1071')
+library(caTools)
+library(caret)
+library(e1071)
+library(magrittr)
+library(dplyr)
+```
+
+
+## Loading dataset
+
+```{r}
+dataset = read.csv('dataset.csv')
+head(dataset, n=5)
+```
+
+
+## Split data into Train and Test set
+
+Customer_Segment column is our dependent variable.
+
+```{r}
+set.seed(123)
+splitted = sample.split(dataset$Customer_Segment, SplitRatio = 0.8)
+trainSet = subset(dataset, splitted == TRUE)
+testSet = subset(dataset, splitted == FALSE)
+```
+
+
+## Feature Scaling
+
+Feature scaling is a method used to normalize the range of independent variables or features of data.
+
+We will scale all the features except the last one Customer_Segment
+
+```{r}
+trainSet[-14] = scale(trainSet[-14])
+testSet[-14] = scale(testSet[-14])
+```
+
+
+## Apply Principal Component Analysis
+
+If we want our new extracted features to explain at least 60 percent of the variance, we need to specify it on thresh parameter. It is a cutoff for the cumulative percent of variance to be retained by PCA.
+
+pcaComp parameter gets the specific number of PCA components to keep. For our case, from 13 variables we will only keep 2. If this parameter is specified, this over-rides thresh. That's why we will not specify the thresh parameter.
+
+Because PCA is unsupervised learning it does not consider the dependent variable. So we will remove the dependent variable which is the last column Customer_Segment from the training set.
+
+```{r, warning=FALSE}
+pca = preProcess(x = trainSet[-14], method = 'pca', pcaComp = 2)
+trainSet = predict(pca, trainSet)
+testSet = predict(pca, testSet)
+
+# 5 lines of the training set
+head(trainSet, n=5)
+```
+
+
+This is our training set. With PCA we reduced the number of dimensions from 13 to 2. PC1 and PC2 are our new dimensions.
+
+
+Now we will move the Customer_Segment column to end of the training set and test set.
+
+```{r}
+# 2 -> PC1, 3 -> PC2, 1 -> Customer_Segment
+trainSet = trainSet[c(2, 3, 1)]
+testSet = testSet[c(2, 3, 1)]
+
+head(trainSet, n=5)
+```
+
+We will build a classification model.
+
+
+
+## Fit Support Vector Machine model to training set
+
+
+```{r}
+model = svm(formula = Customer_Segment ~ ., data = trainSet, type = 'C-classification', kernel = 'linear')
+```
+
+
+## Predict test results
+
+```{r}
+# -3 to remove dependent variable
+prediction = predict(model, newdata = testSet[-3])
+prediction
+```
+
+## Confusion Matrix
+
+```{r}
+# Generate confusion matrix
+conf.matrix <- confusionMatrix(table(testSet[, 3], prediction))
+conf.matrix
+```
+
+As seen above, all of the predictions are correct and the accuracy is 1.
+
+
+```{r}
+# Heatmap visualization of confusion matrix
+table <- data.frame(conf.matrix$table)
+
+
+plotTable <- table %>%
+  group_by(prediction) %>%
+  mutate(prop = Freq/sum(Freq))
+
+ggplot(data =  plotTable, mapping = aes(x = Var1, y = prediction, alpha = prop)) +
+  geom_tile(aes(fill = Freq), colour = "white") +
+  geom_text(aes(label = Freq), vjust = .5, fontface  = "bold", alpha = 1, color="white", size=10) +
+  scale_fill_gradient(low = "blue", high = "navyblue") +
+  theme_bw() + theme(legend.position = "none")
+
+```
+
+## Visualize Train Set Results
+
+We have 3 dimensions with our dependent variable.
+
+```{r}
+set = trainSet
+X1 = seq(min(set[, 1]) - 1, max(set[, 1]) + 1, by = 0.01)
+X2 = seq(min(set[, 2]) - 1, max(set[, 2]) + 1, by = 0.01)
+
+grid_set = expand.grid(X1, X2)
+
+colnames(grid_set) = c('PC1', 'PC2')
+
+y_grid = predict(model, newdata = grid_set)
+
+plot(set[, -3], main = 'SVM (Train set)',
+     xlab = 'PC1', ylab = 'PC2',
+     xlim = range(X1), ylim = range(X2))
+
+contour(X1, X2, matrix(as.numeric(y_grid), length(X1), length(X2)), add = TRUE)
+
+points(grid_set, pch = '.', col = ifelse(y_grid == 2, 'deepskyblue', ifelse(y_grid == 1, 'springgreen3', 'tomato')))
+points(set, pch = 21, bg = ifelse(set[, 3] == 2, 'blue3', ifelse(set[, 3] == 1, 'green4', 'red3')))
+```
+
+## Visualize Tes Set Results
+
+
+```{r}
+set = testSet
+X1 = seq(min(set[, 1]) - 1, max(set[, 1]) + 1, by = 0.01)
+X2 = seq(min(set[, 2]) - 1, max(set[, 2]) + 1, by = 0.01)
+
+grid_set = expand.grid(X1, X2)
+
+colnames(grid_set) = c('PC1', 'PC2')
+
+y_grid = predict(model, newdata = grid_set)
+
+plot(set[, -3], main = 'SVM (Test set)',
+     xlab = 'PC1', ylab = 'PC2',
+     xlim = range(X1), ylim = range(X2))
+
+contour(X1, X2, matrix(as.numeric(y_grid), length(X1), length(X2)), add = TRUE)
+
+points(grid_set, pch = '.', col = ifelse(y_grid == 2, 'deepskyblue', ifelse(y_grid == 1, 'springgreen3', 'tomato')))
+points(set, pch = 21, bg = ifelse(set[, 3] == 2, 'blue3', ifelse(set[, 3] == 1, 'green4', 'red3')))
+```
+
+All points are on their own regions. For example, all green points are on the green region. All of the predictions are correct. 
