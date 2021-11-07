@@ -22,5 +22,12 @@ Logistic Regression is used to understand the relationship between the dependent
 
 ## Logistic Regression implementation in R
 
+The dataset is [Social Network Ads](https://www.kaggle.com/rakeshrau/social-network-ads) which tells which of the users purchased/not purchased a particular product. The last column of the data contains our dependent variable which is Purchased. We will use Logistic Regression to classify users based on Purchased column.
 
+[Codes](https://github.com/crncck/Machine-Learning/blob/main/Classification/LogisticRegression/logrec.Rmd) and [PDF](https://github.com/crncck/Machine-Learning/blob/main/Classification/LogisticRegression/logrec.pdf)
+
+```R
+# Applying logistic regression
+model = glm(formula = Purchased ~ ., family = binomial, data = trainSet)
+```
 
