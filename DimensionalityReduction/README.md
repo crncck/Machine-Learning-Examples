@@ -26,7 +26,11 @@ PCA is highly get affected by outliers.
 
 ## PCA implementation in R
 
-[Codes](https://github.com/crncck/Machine-Learning/blob/main/DimensionalityReduction/PrincipalComponentAnalysis(PCA)/pca.Rmd)
+The dataset is [Wine dataset](https://archive.ics.uci.edu/ml/datasets/wine) which contains the results of a chemical analysis of wines grown in a specific area of Italy. Three types of wine are represented in the 178 samples, with the results of 13 chemical analyses recorded for each sample. 
+
+The last column of the data contains our dependent variable which is Customer_Segment. Our task is classifying the wines based on their properties for customers. We used PCA to reduce dimensions from 13 to 2 dimensions.
+
+[Codes](https://github.com/crncck/Machine-Learning/blob/main/DimensionalityReduction/PrincipalComponentAnalysis(PCA)/pca.Rmd) and [PDF](https://github.com/crncck/Machine-Learning/blob/main/DimensionalityReduction/PrincipalComponentAnalysis(PCA)/pca.pdf)
 
 ```R
 pca = preProcess(x = trainSet[-14], method = 'pca', pcaComp = 2)
