@@ -1,0 +1,185 @@
+---
+title: "Machine Learning"
+author: "Ayşe Ceren Çiçek"
+output: 
+  pdf_document: default
+  html_document: default
+  word_document: default
+subtitle: Logistic Regression
+font-family: Gill Sans
+---
+
+Logistic Regression is a classification model which is used to understand the relationship between the dependent variable and one or more independent variables by estimating probabilities using a logistic regression equation. 
+
+- The dependent variable should be binary like yes or no. 
+
+- It can help you predict the likelihood of an event happening or a choice being made.
+
+Linear Regression outputs continuous value, and it has a straight line to map the input variables to the dependent variables. The output can be any of an infinite number of possibilities. On the other hand, Logistic Regression uses a logistic function to map the input variables to categorical dependent variables. In contrast to Linear Regression, Logistic Regression outputs a probability between 0 and 1.
+
+Dataset: https://www.kaggle.com/rakeshrau/social-network-ads
+
+This dataset shows which of the users purchased/not purchased a particular product.
+
+The columns are:
+
+- User ID
+- Gender
+- Age
+- EstimatedSalary
+- Purchased
+
+
+## Importing libraries
+
+```{r, warning=FALSE}
+library(caTools)
+library(caret)
+library(dplyr)
+```
+
+
+## Loading dataset
+
+```{r}
+dataset = read.csv('dataset.csv')
+dataset = dataset[, 3:5]
+head(dataset, n=5)
+```
+
+We will only use Age, Salary and Purchased columns.
+
+
+## Split data into Train and Test set
+
+Purchased column is our dependent variable.
+
+```{r}
+set.seed(123)
+splitted = sample.split(dataset$Purchased, SplitRatio = 0.75)
+trainSet = subset(dataset, splitted == TRUE)
+testSet = subset(dataset, splitted == FALSE)
+```
+
+
+## Feature Scaling
+
+Feature scaling is a method used to normalize the range of independent variables or features of data.
+
+We will scale all the features except our dependent variable, Purchased.
+
+```{r}
+trainSet[, 1:2] = scale(trainSet[, 1:2])
+testSet[, 1:2] = scale(testSet[,1:2])
+```
+
+
+## Apply Logistic Regression
+
+```{r}
+model = glm(formula = Purchased ~ ., family = binomial, data = trainSet)
+```
+
+
+## Prediction
+
+Probability prediction show us predicted probabilities that the user will buy the product.
+
+```{r}
+probability.prediction = predict(model, type = 'response', newdata = testSet[-3])
+probability.prediction
+```
+
+But we need binary variable like 0 and 1. If the probability is greater than 0.5 turn 1, otherwise return 0.
+
+```{r}
+prediction = ifelse(probability.prediction > 0.5, 1, 0)
+prediction
+```
+
+
+## Confusion Matrix
+
+```{r}
+# Generate confusion matrix
+conf.matrix <- confusionMatrix(table(testSet[, 3], prediction))
+conf.matrix
+```
+
+The accurary is 83%. We have 10 + 7 incorrect classifications.
+
+
+```{r}
+# Heatmap visualization of confusion matrix
+table <- data.frame(conf.matrix$table)
+
+
+plotTable <- table %>%
+  group_by(prediction) %>%
+  mutate(prop = Freq/sum(Freq))
+
+ggplot(data =  plotTable, mapping = aes(x = Var1, y = prediction, alpha = prop)) +
+  geom_tile(aes(fill = Freq), colour = "white") +
+  geom_text(aes(label = Freq), vjust = .5, fontface  = "bold", alpha = 1, color="white", size=10) +
+  scale_fill_gradient(low = "blue", high = "navyblue") +
+  theme_bw() + theme(legend.position = "none")
+
+```
+
+## Visualize Train Set Results
+
+```{r}
+set = trainSet
+X1 = seq(min(set[, 1]) - 1, max(set[, 1]) + 1, by = 0.01)
+X2 = seq(min(set[, 2]) - 1, max(set[, 2]) + 1, by = 0.01)
+
+grid_set = expand.grid(X1, X2)
+
+colnames(grid_set) = c('Age', 'EstimatedSalary')
+
+prob_set = predict(model, type = 'response', newdata = grid_set)
+
+y_grid = ifelse(prob_set > 0.5, 1, 0)
+
+plot(set[, -3], main = 'Logistic Regression (Train Set)',
+     xlab = 'Age', ylab = 'Estimated Salary',
+     xlim = range(X1), ylim = range(X2))
+
+contour(X1, X2, matrix(as.numeric(y_grid), length(X1), length(X2)), add = TRUE)
+
+points(grid_set, pch = '.', col = ifelse(y_grid == 1, 'deepskyblue', 'tomato'))
+points(set, pch = 21, bg = ifelse(set[, 3] == 1, 'blue3', 'red3'))
+```
+
+Young people who did not buy the product are on the red are with red points. On the other hand, older people who bought the product are on the blue part with blue points. The blue points which are on the red side are the ones who are young but bought the product. And those red points which are on the blue part, they are older people who did not buy the product.
+
+The straight line seen on the plot is called the Prediction Boundary.
+
+
+## Visualize Train Set Results
+
+```{r}
+set = testSet
+X1 = seq(min(set[, 1]) - 1, max(set[, 1]) + 1, by = 0.01)
+X2 = seq(min(set[, 2]) - 1, max(set[, 2]) + 1, by = 0.01)
+
+grid_set = expand.grid(X1, X2)
+
+colnames(grid_set) = c('Age', 'EstimatedSalary')
+
+prob_set = predict(model, type = 'response', newdata = grid_set)
+
+y_grid = ifelse(prob_set > 0.5, 1, 0)
+
+plot(set[, -3], main = 'Logistic Regression (Test Set)',
+     xlab = 'Age', ylab = 'Estimated Salary',
+     xlim = range(X1), ylim = range(X2))
+
+contour(X1, X2, matrix(as.numeric(y_grid), length(X1), length(X2)), add = TRUE)
+
+points(grid_set, pch = '.', col = ifelse(y_grid == 1, 'deepskyblue', 'tomato'))
+points(set, pch = 21, bg = ifelse(set[, 3] == 1, 'blue3', 'red3'))
+```
+
+Majority of the blue and red points are on the right parts of the plot. We have 17 incorrect predictions.
+
