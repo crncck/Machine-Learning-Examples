@@ -156,7 +156,7 @@ Young people who did not buy the product are on the red are with red points. On 
 The straight line seen on the plot is called the Prediction Boundary.
 
 
-## Visualize Train Set Results
+## Visualize Test Set Results
 
 ```{r}
 set = testSet
