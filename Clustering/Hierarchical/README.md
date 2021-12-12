@@ -50,7 +50,7 @@ The linkage criterion determines the distance between sets of observations as a 
 - **a) Minimum Linkage:** Linkage criterion is the minimal distance between a point of A and a point of B.
 - **b) Maximum Linkage:** Linkage criterion is the maximal distance between a point of A and a point of B.
 - **c) Average Linkage:** Linkage criterion is the average of all the distances between any point of A and any point of B.
-- **d) Ward’s Minimum Variance Method: **Ward's minimum variance criterion minimizes the total within-cluster variance. At each step it finds the pair of clusters that leads to minimum increase in total within-cluster variance after merging.  
+- **d) Ward’s Minimum Variance Method:** Ward's minimum variance criterion minimizes the total within-cluster variance. At each step it finds the pair of clusters that leads to minimum increase in total within-cluster variance after merging.  
 
 
 
